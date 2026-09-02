@@ -3,7 +3,7 @@ package dominioRepublica;
 import java.time.LocalDate;
 import java.time.Period;
 
-public class Morador {
+public class  Morador {
 
     public String nome;
     public int id;

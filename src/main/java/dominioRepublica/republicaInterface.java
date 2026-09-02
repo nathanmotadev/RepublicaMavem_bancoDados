@@ -67,11 +67,11 @@ public class republicaInterface {
         while (true) {
             System.out.print(interfaceRep);
 
-            int Setopcao = input.nextInt();
+            int setOpcao = input.nextInt();
             input.nextLine();
 
 
-            switch (Setopcao) {
+            switch (setOpcao) {
                 case 1:
                     System.out.println(interfaceRepMoradores);
 
@@ -159,9 +159,24 @@ public class republicaInterface {
 
                             System.out.print("Data da despesa (dd/MM/yyyy): ");
                             String dataDespesaDigitada = input.nextLine();
-                            LocalDate dataDespesa = LocalDate.parse(dataDespesaDigitada, formatoData);
+                            LocalDate data_despesa = LocalDate.parse(dataDespesaDigitada, formatoData);
 
-                            conexaoBanco.inserirDespesa(descricao, valor, dataDespesa);
+                            System.out.println("Digite a categoria da despesa: ");
+                            String categoria = input.nextLine();
+
+                            System.out.println("A despesa foi paga? (true/false): ");
+                            boolean pago = input.nextBoolean();
+                            input.nextLine();
+
+                            System.out.println("Digite a forma de pagamento: ");
+                            String forma_pagamento = input.nextLine();
+
+                            System.out.println("Digite as observações: ");
+                            String observacoes = input.nextLine();
+
+                            LocalDate data_criacao = LocalDate.now();
+
+                            conexaoBanco.inserirDespesa(descricao, valor, data_despesa, categoria, pago, forma_pagamento, observacoes);
                             break;
 
                         case 2:
@@ -172,7 +187,7 @@ public class republicaInterface {
                             int ano = input.nextInt();
                             input.nextLine();
 
-                            System.out.println("\n========== 💰 DESPESAS DO MÊS ==========\n");
+                            System.out.println("\n========== 💰 DESPESAS DO MÊS " + mes + "/" + ano + " ==========\n");
                             ArrayList<Despesa> despesasMes = conexaoBanco.listarDespesasPorMes(mes, ano);
                             
                             if (despesasMes.isEmpty()) {
@@ -201,13 +216,13 @@ public class republicaInterface {
                     switch (opcaoPagamentoExtra) {
                         case 1:
                             System.out.println("Do que se trata?: ");
-                            String descricaoPag = input.nextLine();
+                            String descricaoP = input.nextLine();
 
                             System.out.println("Digite o valor do pagamento extra: ");
                             double valorPago = input.nextDouble();
                             input.nextLine();
 
-                            conexaoBanco.inserirPagamento(descricaoPag, valorPago);
+                            conexaoBanco.inserirPagamento(descricaoP, valorPago);
                             break;
 
                         case 2:
