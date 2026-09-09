@@ -1,0 +1,51 @@
+╔════════════════════════════════════════════════════════════════════════╗
+║                    ✅ CORREÇÕES APLICADAS                             ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+🔧 PROBLEMA 1: Unknown column 'morador_pagador_id'
+   STATUS: ✅ CORRIGIDO
+   
+   SOLUÇÃO:
+   • Executado: atualizar_banco_forcar.sql
+   • Resultado: Tabela pagamentos_extras recriada COM a coluna
+   
+   VERIFICAÇÃO:
+   mysql> DESCRIBE pagamentos_extras;
+   ✓ morador_pagador_id INT NOT NULL (coluna criada)
+
+═══════════════════════════════════════════════════════════════════════════
+
+🔧 PROBLEMA 2: Unknown column 'dataNascimento' in 'field list'
+   STATUS: ✅ CORRIGIDO
+   
+   SOLUÇÃO:
+   • Arquivo: conexaoBanco.java
+   • Linha 23: Alterado "dataNascimento" → "data_nascimento"
+   • Linha 49: Alterado "dataNascimento" → "data_nascimento"
+   
+   RAZÃO:
+   O banco usa "data_nascimento" (snake_case com underscore)
+   O código Java usava "dataNascimento" (camelCase)
+
+═══════════════════════════════════════════════════════════════════════════
+
+📋 RESUMO DAS MUDANÇAS:
+
+   Arquivo: conexaoBanco.java
+   
+   ✓ Linha 23: INSERT INTO moradores (..., dataNascimento, ...)
+             → INSERT INTO moradores (..., data_nascimento, ...)
+   
+   ✓ Linha 49: rs.getDate("dataNascimento")
+             → rs.getDate("data_nascimento")
+
+═══════════════════════════════════════════════════════════════════════════
+
+🎯 PRÓXIMO PASSO:
+
+   Teste novamente:
+   1. Menu → 1 (Moradores) → 1 (Cadastrar)
+   2. Preencha os dados
+   3. Deve cadastrar com sucesso ✅
+
+═══════════════════════════════════════════════════════════════════════════

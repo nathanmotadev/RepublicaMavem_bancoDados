@@ -2,6 +2,7 @@ package dominioRepublica;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class conexaoBanco {
@@ -19,7 +20,7 @@ public class conexaoBanco {
     // ======================== MORADORES ========================
 
     public static void inserirMorador(String nome, LocalDate dataNascimento, LocalDate dataEntrada) {
-        String sql = "INSERT INTO moradores (nome, dataNascimento, data_entrada) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO moradores (nome, data_nascimento, data_entrada) VALUES (?, ?, ?)";
         try (Connection conexao = conectar();
              PreparedStatement stmt = conexao.prepareStatement(sql)) {
 
@@ -45,7 +46,7 @@ public class conexaoBanco {
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String nome = rs.getString("nome");
-                LocalDate dataNascimento = rs.getDate("dataNascimento").toLocalDate();
+                LocalDate dataNascimento = rs.getDate("data_nascimento").toLocalDate();
                 LocalDate dataEntrada = rs.getDate("data_entrada").toLocalDate();
 
                 Morador morador = new Morador(nome, id, dataNascimento, '\0', dataEntrada);
@@ -151,16 +152,36 @@ public class conexaoBanco {
 
     // ======================== PAGAMENTOS EXTRAS ========================
 
-    public static void inserirPagamento(String descricao, double valor) {
-        String sql = "INSERT INTO pagamentos_extras (descricao, valor, data_pagamento) VALUES (?, ?, NOW())";
+    public static void inserirPagamento(String descricao, double valor, int morador_pagador_id, ArrayList<Integer> participantesIds) {
+        String sql = "INSERT INTO pagamentos_extras (descricao, valor, morador_pagador_id, data_pagamento) VALUES (?, ?, ?, NOW())";
 
         try (Connection conexao = conectar();
-             PreparedStatement stmt = conexao.prepareStatement(sql)) {
+             PreparedStatement stmt = conexao.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, descricao);
             stmt.setDouble(2, valor);
+            stmt.setInt(3, morador_pagador_id);
             stmt.executeUpdate();
-            System.out.println("✅ Pagamento extra cadastrado com sucesso!");
+
+            ResultSet rs = stmt.getGeneratedKeys();
+            if (rs.next()) {
+                int pagamentoId = rs.getInt(1);
+                
+                double valorPorPessoa = valor / (participantesIds.size() + 1);
+                
+                String sqlParticipantes = "INSERT INTO pagamento_participantes (pagamento_id, morador_id, valor_devido, pago) VALUES (?, ?, ?, FALSE)";
+                try (PreparedStatement stmtPart = conexao.prepareStatement(sqlParticipantes)) {
+                    for (int morador_id : participantesIds) {
+                        stmtPart.setInt(1, pagamentoId);
+                        stmtPart.setInt(2, morador_id);
+                        stmtPart.setDouble(3, valorPorPessoa);
+                        stmtPart.addBatch();
+                    }
+                    stmtPart.executeBatch();
+                }
+                
+                System.out.println("✅ Pagamento extra cadastrado com sucesso!");
+            }
 
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("❌ Erro ao cadastrar pagamento: " + e.getMessage());
@@ -169,17 +190,47 @@ public class conexaoBanco {
 
     public static ArrayList<Pagamento> listarPagamentos() {
         ArrayList<Pagamento> pagamentos = new ArrayList<>();
-        String sql = "SELECT * FROM pagamentos_extras ORDER BY data_pagamento DESC";
+        String sql = "SELECT pe.*, m.nome as pagador_nome, m.data_nascimento, m.data_entrada FROM pagamentos_extras pe " +
+                     "JOIN moradores m ON pe.morador_pagador_id = m.id " +
+                     "ORDER BY pe.data_pagamento DESC";
 
         try (Connection conexao = conectar();
              Statement stmt = conexao.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                double valorPago = rs.getDouble("valor");
-                ArrayList<Morador> pagadores = new ArrayList<>();
-
-                Pagamento pagamento = new Pagamento(pagadores, valorPago);
+                int id = rs.getInt("id");
+                String descricao = rs.getString("descricao");
+                double valor = rs.getDouble("valor");
+                int morador_id = rs.getInt("morador_pagador_id");
+                String morador_nome = rs.getString("pagador_nome");
+                LocalDate dataNascimento = rs.getDate("data_nascimento").toLocalDate();
+                LocalDate dataEntrada = rs.getDate("data_entrada").toLocalDate();
+                LocalDateTime dataPagamento = rs.getTimestamp("data_pagamento").toLocalDateTime();
+                
+                Morador pagador = new Morador(morador_nome, morador_id, dataNascimento, '\0', dataEntrada);
+                
+                String sqlParticipantes = "SELECT m.* FROM pagamento_participantes pp " +
+                                         "JOIN moradores m ON pp.morador_id = m.id " +
+                                         "WHERE pp.pagamento_id = ?";
+                ArrayList<Morador> participantes = new ArrayList<>();
+                
+                try (PreparedStatement stmtPart = conexao.prepareStatement(sqlParticipantes)) {
+                    stmtPart.setInt(1, id);
+                    ResultSet rsPart = stmtPart.executeQuery();
+                    
+                    while (rsPart.next()) {
+                        int part_id = rsPart.getInt("id");
+                        String part_nome = rsPart.getString("nome");
+                        LocalDate part_dataNasc = rsPart.getDate("data_nascimento").toLocalDate();
+                        LocalDate part_dataEntrada = rsPart.getDate("data_entrada").toLocalDate();
+                        
+                        Morador participante = new Morador(part_nome, part_id, part_dataNasc, '\0', part_dataEntrada);
+                        participantes.add(participante);
+                    }
+                }
+                
+                Pagamento pagamento = new Pagamento(id, descricao, valor, pagador, participantes, dataPagamento);
                 pagamentos.add(pagamento);
             }
 

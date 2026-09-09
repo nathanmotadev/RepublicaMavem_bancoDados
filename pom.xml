@@ -17,6 +17,20 @@
             <version>8.4.0</version>
         </dependency>
 
+        <!-- FlatLaf - Modern Look and Feel -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+
+        <!-- MigLayout - Modern Layout Manager -->
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-swing</artifactId>
+            <version>11.3</version>
+        </dependency>
+
     </dependencies>
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

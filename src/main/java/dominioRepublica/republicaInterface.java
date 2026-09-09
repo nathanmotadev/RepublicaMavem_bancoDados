@@ -200,30 +200,90 @@ public class republicaInterface {
 
                     switch (opcaoPagamentoExtra) {
                         case 1:
-                            System.out.println("Do que se trata?: ");
-                            String descricaoPag = input.nextLine();
+                           System.out.println("Do que se trata?: ");
+                           String descricaoPag = input.nextLine();
 
-                            System.out.println("Digite o valor do pagamento extra: ");
-                            double valorPago = input.nextDouble();
-                            input.nextLine();
+                           System.out.println("Digite o valor do pagamento extra: ");
+                           double valorPago = input.nextDouble();
+                           input.nextLine();
 
-                            conexaoBanco.inserirPagamento(descricaoPag, valorPago);
-                            break;
+                           ArrayList<Morador> moradoresDisp = conexaoBanco.listarMoradores();
+                           if (moradoresDisp.isEmpty()) {
+                               System.out.println("❌ Nenhum morador cadastrado!");
+                               break;
+                           }
+
+                           System.out.println("\n========== 👤 QUEM PAGOU INTEIRAMENTE ? ==========\n");
+                           for (int i = 0; i < moradoresDisp.size(); i++) {
+                               System.out.println((i + 1) + " - " + moradoresDisp.get(i).getNome());
+                           }
+                           System.out.println("Escolha o morador pagador: ");
+                           int indicePagador = input.nextInt();
+                           input.nextLine();
+
+                           if (indicePagador < 1 || indicePagador > moradoresDisp.size()) {
+                               System.out.println("❌ Opção inválida!");
+                               break;
+                           }
+
+                           int moradorPagadorId = moradoresDisp.get(indicePagador - 1).getId();
+
+                           System.out.println("\n========== 👥 QUEM MAIS PARTICIPA? ==========\n");
+                           for (int i = 0; i < moradoresDisp.size(); i++) {
+                               System.out.println((i + 1) + " - " + moradoresDisp.get(i).getNome());
+                           }
+                           System.out.println("Digite os números dos participantes (separados por vírgula):");
+                           String participantesStr = input.nextLine();
+                            
+                           ArrayList<Integer> participantesIds = new ArrayList<>();
+                           String[] indices = participantesStr.split(",");
+                           for (String indice : indices) {
+                               try {
+                                   int idx = Integer.parseInt(indice.trim());
+                                   if (idx > 0 && idx <= moradoresDisp.size()) {
+                                       int id = moradoresDisp.get(idx - 1).getId();
+                                       if (!participantesIds.contains(id) && id != moradorPagadorId) {
+                                           participantesIds.add(id);
+                                       }
+                                   }
+                               } catch (NumberFormatException e) {
+                                   System.out.println("⚠️ Número inválido: " + indice);
+                               }
+                           }
+
+                           if (participantesIds.isEmpty()) {
+                               System.out.println("⚠️ Nenhum participante selecionado!");
+                               break;
+                           }
+
+                           conexaoBanco.inserirPagamento(descricaoPag, valorPago, moradorPagadorId, participantesIds);
+                           break;
 
                         case 2:
-                            System.out.println("\n========== 🏦 PAGAMENTOS EXTRAS ==========\n");
-                            ArrayList<Pagamento> pagamentosExtras = conexaoBanco.listarPagamentos();
+                           System.out.println("\n========== 🏦 PAGAMENTOS EXTRAS ==========\n");
+                           ArrayList<Pagamento> pagamentosExtras = conexaoBanco.listarPagamentos();
                             
-                            if (pagamentosExtras.isEmpty()) {
-                                System.out.println("Nenhum pagamento registrado.");
-                            } else {
-                                for (int i = 0; i < pagamentosExtras.size(); i++) {
-                                    System.out.println("Pagamento " + (i + 1) + ":");
-                                    System.out.println("  💰 Valor: R$ " + String.format("%.2f", pagamentosExtras.get(i).getValorPago()));
-                                }
-                            }
-                            System.out.println();
-                            break;
+                           if (pagamentosExtras.isEmpty()) {
+                               System.out.println("Nenhum pagamento registrado.");
+                           } else {
+                               for (Pagamento pag : pagamentosExtras) {
+                                   System.out.println("\n📌 " + pag.getDescricao());
+                                   System.out.println("  💰 Valor total: R$ " + String.format("%.2f", pag.getValor()));
+                                   System.out.println("  👤 Pagador: " + pag.getMoradorPagador().getNome());
+                                    
+                                   ArrayList<Morador> participantes = pag.getParticipantes();
+                                   if (!participantes.isEmpty()) {
+                                       System.out.println("  👥 Participantes que vão pagar:");
+                                       double valorPorPessoa = pag.getValor() / (participantes.size() + 1);
+                                       for (Morador m : participantes) {
+                                           System.out.println("     - " + m.getNome() + " (R$ " + 
+                                                            String.format("%.2f", valorPorPessoa) + ")");
+                                       }
+                                   }
+                               }
+                           }
+                           System.out.println();
+                           break;
                     }
                     break;
 

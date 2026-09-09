@@ -26,7 +26,19 @@ CREATE TABLE IF NOT EXISTS pagamentos_extras (
     id INT PRIMARY KEY AUTO_INCREMENT,
     descricao VARCHAR(255),
     valor DOUBLE,
-    data_pagamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    morador_pagador_id INT NOT NULL,
+    data_pagamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (morador_pagador_id) REFERENCES moradores(id)
+);
+
+CREATE TABLE IF NOT EXISTS pagamento_participantes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    pagamento_id INT NOT NULL,
+    morador_id INT NOT NULL,
+    valor_devido DOUBLE,
+    pago BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (pagamento_id) REFERENCES pagamentos_extras(id) ON DELETE CASCADE,
+    FOREIGN KEY (morador_id) REFERENCES moradores(id)
 );
 
 -- Confirmação
